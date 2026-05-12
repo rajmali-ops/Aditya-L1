@@ -24,8 +24,16 @@ function draw() {
         }
         if (y < -50) {
             frame_one = false;
-            // frame_two = true;
+            frame_two = true;
         }
+    }
+    if (frame_two) {
+        background(135, 206, 250);
+        push();
+        rotate(PI/4);
+        drawRocket(450,100);
+        drawFlame(450,100);
+        pop();
     }
 }
 
