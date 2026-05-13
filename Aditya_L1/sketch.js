@@ -3,12 +3,12 @@ let F1rocketY = 540;
 var F2rocketX = 50;
 var F2rocketY = 600;
 let isLaunching = false;
-let frame_one = false;
+let frame_one = true;
 let frame_two = false;
 let frame_three = false;
 let frame_3_bg;
 let frame_four = false;
-let frame_five = true;
+let frame_five = false;
 let frame_six = false;
 let escaping = false;
 let posX, posY; // Current position
@@ -21,10 +21,20 @@ let currentH = 40;
 let currentOffset = -30;
 let inHalo = false;
 let haloAngle = 0;
+let dismantleStep = 0;
+let boosterY = 0, boosterVY = 0;
+let boosterX = 0, boosterVX = 1.5; // Sideways push for boosters
+let ps1Y = 0, ps1VY = 0;
+let ps2Y = 0, ps2VY = 0;
+let ps3Y = 0, ps3VY = 0;
+let separationForce = 0.15;
+let is_rocket = true;
+let is_satellite = false;
+let SatelliteX = 80;
+let SatelliteY = -300;
 
 async function setup() {
     createCanvas(900, 600);
-    angleMode(DEGREES);
     frame_3_bg = await loadImage('assets/Frame-3.png');
 }
 function draw() {
@@ -67,18 +77,27 @@ function draw() {
     }
     if (frame_three) {
         background(frame_3_bg);
+        angleMode(DEGREES);
+        updateFallingParts();
         push();
-        translate(450, 500);
-        rotate(PI / 3);
-        drawRocket(-100, 120);
-        drawFlame(-100, 120);
-        pop();
-        if (frameCount > 900) { // Arbitrary long time to ensure it stays until we want to switch
+        translate(400, 350);
+        if (is_rocket) {
+            dismantleRocket(0, 0, 1, 60);
+        }
+        if (is_satellite) {
+            rotate(45);
+            drawSatellite(SatelliteX, SatelliteY, 2);
+            SatelliteY -= 0.8;
+            print(SatelliteY);
+        }
+        if (SatelliteY < -600) {
             frame_three = false;
             frame_four = true;
         }
+        pop();
     }
     if (frame_four) {
+        angleMode(RADIANS);
         background(10);
         // Define static positions for Earth and the L1 Lagrange Point
         let earthX = width * 0.85;
@@ -125,6 +144,7 @@ function draw() {
         }
     }
     if (frame_five) {
+        angleMode(DEGREES);
         background(5, 5, 15);
         push();
         translate(width / 2, height / 2);
@@ -197,7 +217,7 @@ function draw() {
         text("L5", l5x, l5y + 25);
 
         textSize(12);
-        text("Aditya-L1", l1x-20, -45);
+        text("Aditya-L1", l1x - 20, -45);
         angle += 1; // Slow rotation for the halo orbit
         if (angle > 600) {
             frame_five = false;
@@ -211,11 +231,16 @@ function draw() {
         textAlign(CENTER, CENTER);
         text("Mission Success: Aditya-L1 in Halo Orbit!", width / 2, height / 2);
     }
-
 }
-
 function mousePressed() {
     isLaunching = true;
+    if (dismantleStep <= 5) {
+        dismantleStep++;
+    }
+    if (dismantleStep === 6) {
+        is_rocket = false;
+        is_satellite = true;
+    }
 }
 function drawRocket(x, y) {
     push();
@@ -384,4 +409,122 @@ function drawSun(x, y, d) {
         circle(cos(a) * r, sin(a) * r, random(2, 4));
     }
     pop();
+}
+function dismantleRocket(x, y, s, rotAngle) {
+    push();
+    translate(x, y);
+    scale(s);
+    rotate(rotAngle); // <--- THIS ROTATES THE ENTIRE ROCKET
+    rectMode(CENTER);
+    noStroke();
+
+    // --- STEP 1: BOOSTERS ---
+    if (dismantleStep >= 0) {
+        // LEFT BOOSTER
+        push();
+        translate(-boosterX, boosterY);
+        fill(128, 0, 0);
+        rect(-28, -40, 16, 80);
+        triangle(-36, -80, -20, -80, -28, -95);
+        fill(80);
+        rect(-28, 5, 12, 10);
+        fill(255, 150, 0, 200);
+        triangle(-32, 10, -24, 10, -28 + random(-2, 2), random(25, 45));
+        pop();
+
+        // RIGHT BOOSTER
+        push();
+        translate(boosterX, boosterY);
+        fill(128, 0, 0);
+        rect(28, -40, 16, 80);
+        triangle(20, -80, 36, -80, 28, -95);
+        fill(80);
+        rect(28, 5, 12, 10);
+        fill(255, 150, 0, 200);
+        triangle(24, 10, 32, 10, 28 + random(-2, 2), random(25, 45));
+        pop();
+        // drawFlame(28, 40);
+    }
+
+
+    // --- FINAL PAYLOAD & PS4 ---
+    push();
+    fill(240);
+    rect(0, -255, 40, 30);
+    fill(240);
+    rect(0, -280, 40, 20);
+    triangle(-20, -290, 20, -290, 0, -340);
+    fill(255, 150, 0, 200);
+    triangle(-20, -240, 20, -240, random(-5, 5), random(40, 70));
+    fill(255, 255, 0);
+    triangle(-15, -240, 15, -240, random(-3, 3), random(20, 30));
+    pop();
+
+    // --- STEP 4: PS3 (THIRD STAGE) ---
+    push();
+    translate(0, ps3Y);
+    fill(128, 0, 0);
+    rect(0, -220, 40, 40);
+    fill(255, 150, 0);
+    triangle(-20, -200, 20, -200, random(-5, 5), random(40, 70));
+    fill(255, 255, 0);
+    triangle(-15, -200, 15, -200, random(-3, 3), random(20, 30));
+    pop();
+
+    // --- STEP 3: PS2 (SECOND STAGE + FLAG) ---
+    push();
+    translate(0, ps2Y);
+    fill(240);
+    rect(0, -160, 40, 80);
+    fill(255, 150, 0, 200);
+    triangle(-15, -120, 15, -120, random(-5, 5), random(40, 70));
+    fill(255, 255, 0, 200);
+    triangle(-10, -120, 10, -120, random(-3, 3), random(30, 50));
+    fill(255, 153, 51);
+    rect(0, -170, 40, 5);
+    fill(255);
+    rect(0, -165, 40, 5);
+    fill(19, 136, 8);
+    rect(0, -160, 40, 5);
+    pop();
+
+
+    // --- STEP 2: PS1 (FIRST STAGE) ---
+    push();
+    translate(0, ps1Y);
+    fill(240);
+    rect(0, -60, 40, 120);
+    fill(80);
+    quad(-15, 0, 15, 0, 20, 15, -20, 15);
+    fill(255, 150, 0, 200);
+    triangle(-15, 15, 15, 15, random(-5, 5), random(40, 70));
+    fill(255, 255, 0, 200);
+    triangle(-10, 15, 10, 15, random(-3, 3), random(30, 50));
+    pop();
+
+
+
+}
+function updateFallingParts() {
+    // Instead of fixed speed, we increase the velocity (VY) every frame
+    if (dismantleStep >= 2) {
+        boosterVY += separationForce;
+        boosterY += boosterVY;        // Moves down faster over time
+        boosterX += boosterVX;        // Drifts outward
+    }
+
+    if (dismantleStep >= 3) {
+        ps1VY += separationForce;
+        ps1Y += ps1VY;
+    }
+
+    if (dismantleStep >= 4) {
+        ps2VY += separationForce;
+        ps2Y += ps2VY;
+    }
+
+    if (dismantleStep >= 5) {
+        ps3VY += separationForce;
+        ps3Y += ps3VY;
+    }
 }
