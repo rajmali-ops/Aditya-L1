@@ -1,16 +1,29 @@
-let x = 440;
-let y = 540;
+let F1rocketX = 440;
+let F1rocketY = 540;
+var F2rocketX = 50;
+var F2rocketY = 600;
 let isLaunching = false;
-let frame_one = true;
+let frame_one = false;
 let frame_two = false;
-function setup() {
+let frame_three = false;
+let frame_3_bg;
+let frame_four = true;
+
+// function preload() {
+//   // Load the image before setup
+// //   bgImage = loadImage('assets/background.jpg');
+//   frame_3_bg = loadImage('assets/Frame-3.png');
+// }
+
+async function setup() {
     createCanvas(900, 600);
+    frame_3_bg = await loadImage('assets/Frame-3.png');
 }
 function draw() {
     if (frame_one) {
         background(135, 206, 250);
         noStroke();
-        drawRocket(x, y);
+        drawRocket(F1rocketX, F1rocketY);
         fill(140);
         rect(200, 550, 500, 60); // Ground
         fill(180, 40, 40);
@@ -19,22 +32,46 @@ function draw() {
         rect(340, 280, 80, 10);
         rect(340, 360, 80, 10);
         if (isLaunching === true) {
-            y = y - 0.5;
-            drawFlame(x, y);
+            F1rocketY = F1rocketY - 5;
+            drawFlame(F1rocketX, F1rocketY);
         }
-        if (y < -50) {
+        if (F1rocketY < -50) {
             frame_one = false;
             frame_two = true;
+            // frame_three = true;
         }
     }
     if (frame_two) {
         background(135, 206, 250);
+
         push();
-        rotate(PI/4);
-        drawRocket(450,100);
-        drawFlame(450,100);
+        translate(F2rocketX, F2rocketY);
+        rotate(PI / 4);
+        drawRocket(0, 0); // Draw at the translated origin
+        drawFlame(0, 0);
+        pop();
+        F2rocketX += 2; // Moves Right
+        F2rocketY -= 2; // Moves Up
+        if (F2rocketX > 900) {
+            frame_two = false;
+            frame_three = true;
+        }
+    }
+    if (frame_three) {
+        background(frame_3_bg);
+        push();
+        translate(450, 500);
+        rotate(PI / 3);
+        drawRocket(-100, 120);
+        drawFlame(-100, 120);
         pop();
     }
+    if (frame_four) {
+        background(0);
+        drawEarth(700, 300);
+
+    }
+
 }
 
 function mousePressed() {
@@ -98,4 +135,13 @@ function drawFlame(x, y) {
     triangle(24, 10, 32, 10, 28 + random(-2, 2), random(25, 45));
 
     pop();
+}
+function drawEarth(x, y) {
+  push();
+  translate(x, y);
+  rotate(frameCount * 0.01); 
+  textAlign(CENTER, CENTER);
+  textSize(100);
+  text("🌍", 0, 0); 
+  pop();
 }
