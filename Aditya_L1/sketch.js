@@ -32,10 +32,60 @@ let is_rocket = true;
 let is_satellite = false;
 let SatelliteX = 80;
 let SatelliteY = -300;
+let myStars = [];
+
+let activePayload = 0; // Tracks which instrument is currently clicked
+
+// Data about the 7 scientific instruments on Aditya-L1
+const payloads = [
+    {
+        name: "VELC", full: "Visible Emission Line Coronagraph", type: "Remote Sensing",
+        target: "Solar Corona",
+        desc: "Blocks the Sun's bright disk to study the Solar Corona (outermost layer) and the dynamics of Coronal Mass Ejections (CMEs).",
+        color: [255, 100, 100]
+    },
+    {
+        name: "SUIT", full: "Solar Ultraviolet Imaging Telescope", type: "Remote Sensing",
+        target: "Photosphere & Chromosphere",
+        desc: "Takes images of the Solar Photosphere and Chromosphere in near-Ultraviolet (UV) light to measure solar radiation variations.",
+        color: [100, 150, 255]
+    },
+    {
+        name: "SoLEXS", full: "Solar Low Energy X-ray Spectrometer", type: "Remote Sensing",
+        target: "Solar Corona (Soft X-rays)",
+        desc: "Measures soft X-ray emissions to study the heating mechanism of the solar corona and solar flares.",
+        color: [100, 255, 100]
+    },
+    {
+        name: "HEL1OS", full: "High Energy L1 Orbiting X-ray Spectrometer", type: "Remote Sensing",
+        target: "Solar Flares (Hard X-rays)",
+        desc: "Observes hard X-ray emissions to study explosive energy release and acceleration of particles during solar flares.",
+        color: [255, 255, 100]
+    },
+    {
+        name: "ASPEX", full: "Aditya Solar wind Particle Experiment", type: "In-situ (Local)",
+        target: "Solar Wind (Protons/Ions)",
+        desc: "Catches particles flying through space to study the variation and properties of solar wind (protons and heavy ions).",
+        color: [255, 150, 200]
+    },
+    {
+        name: "PAPA", full: "Plasma Analyser Package for Aditya", type: "In-situ (Local)",
+        target: "Solar Plasma (Electrons)",
+        desc: "Analyzes the composition of solar wind plasma and its energy distribution right at the L1 point.",
+        color: [150, 255, 255]
+    },
+    {
+        name: "MAG", full: "Advanced Tri-axial High Resolution Magnetometers", type: "In-situ (Local)",
+        target: "Interplanetary Magnetic Field",
+        desc: "Measures the strength and direction of the interplanetary magnetic field passing through the L1 point.",
+        color: [200, 150, 255]
+    }
+];
 
 async function setup() {
     createCanvas(900, 600);
     frame_3_bg = await loadImage('assets/Frame-3.png');
+    createStars(500);
 }
 function draw() {
     if (frame_one) {
@@ -99,6 +149,7 @@ function draw() {
     if (frame_four) {
         angleMode(RADIANS);
         background(10);
+        drawShiningStars();
         // Define static positions for Earth and the L1 Lagrange Point
         let earthX = width * 0.85;
         let earthY = height * 0.7;
@@ -146,6 +197,7 @@ function draw() {
     if (frame_five) {
         angleMode(DEGREES);
         background(5, 5, 15);
+        drawShiningStars();
         push();
         translate(width / 2, height / 2);
         let orbitRadius = 220;
@@ -225,11 +277,40 @@ function draw() {
         }
     }
     if (frame_six) {
-        background(0);
+        background(15, 20, 35);
+
+        // Base coordinates
+        let sunX = 150;
+        let sunY = height / 2 - 50;
+        let satX = 550;
+        let satY = height / 2 - 50;
+
+        // 1. Draw Title
         fill(255);
+        noStroke();
         textSize(24);
-        textAlign(CENTER, CENTER);
-        text("Mission Success: Aditya-L1 in Halo Orbit!", width / 2, height / 2);
+        textAlign(LEFT, TOP);
+        text("Aditya-L1 Science Payloads", 20, 20);
+        textSize(14);
+        fill(200);
+        text("Click the instruments on the right to see what they study.", 20, 50);
+
+        // 2. Draw Sun Layers
+        sun_info(sunX, sunY);
+
+        // 3. Draw Scanner Beam based on Active Payload
+        drawScannerBeam(sunX, sunY, satX, satY);
+
+        // 4. Draw Satellite
+        drawSatellite(satX, satY, 1.2);
+
+        // 5. Draw Buttons
+        drawButtons();
+
+        // 6. Draw Info Panel
+        drawInfoPanel();
+
+        angle += 0.02; // Rotate satellite slightly over time
     }
 }
 function mousePressed() {
@@ -240,6 +321,20 @@ function mousePressed() {
     if (dismantleStep === 6) {
         is_rocket = false;
         is_satellite = true;
+    }
+    // Check if a button was clicked
+    let btnWidth = 100;
+    let btnHeight = 40;
+    let startX = 750;
+    let startY = 100;
+    let spacing = 50;
+
+    for (let i = 0; i < payloads.length; i++) {
+        let y = startY + (i * spacing);
+        // Simple bounding box collision detection for buttons
+        if (mouseX > startX && mouseX < startX + btnWidth && mouseY > y && mouseY < y + btnHeight) {
+            activePayload = i;
+        }
     }
 }
 function drawRocket(x, y) {
@@ -527,4 +622,140 @@ function updateFallingParts() {
         ps3VY += separationForce;
         ps3Y += ps3VY;
     }
+}
+function createStars(starCount) {
+    for (let i = 0; i < starCount; i++) {
+        myStars.push({
+            x: random(width),              // Random horizontal position
+            y: random(height),             // Random vertical position
+            size: random(1, 3),            // Random size between 1 and 3 pixels
+            blinkSpeed: random(0.02, 0.1)  // Random twinkling speed
+        });
+    }
+}
+function drawShiningStars() {
+    noStroke(); // No outlines on the stars
+
+    for (let i = 0; i < myStars.length; i++) {
+        let s = myStars[i]; // Get the current star from our list
+
+        // The Magic Math: 
+        // sin() creates a smooth wave that goes up and down forever.
+        // We map that wave to a brightness level between 50 (dim) and 255 (bright).
+        let brightness = map(sin(frameCount * s.blinkSpeed + s.x), -1, 1, 50, 255);
+
+        // Set the color to white, but change the transparency (brightness)
+        fill(255, brightness);
+
+        // Draw the star!
+        circle(s.x, s.y, s.size);
+    }
+}
+// --- VISUAL FUNCTIONS ---
+function sun_info(x, y) {
+    noStroke();
+
+    // Corona (Outer glow)
+    fill(255, 100, 50, 40);
+    circle(x, y, 280);
+
+    // Chromosphere
+    fill(255, 150, 0, 100);
+    circle(x, y, 200);
+
+    // Photosphere (Inner Sun)
+    fill(255, 220, 0);
+    circle(x, y, 150);
+
+    // Layer Labels
+    fill(255, 150);
+    textAlign(CENTER, CENTER);
+    textSize(12);
+    text("Corona", x, y - 120);
+    text("Chromosphere", x, y - 80);
+    text("Photosphere", x, y);
+}
+function drawScannerBeam(sx, sy, satX, satY) {
+    let p = payloads[activePayload];
+    strokeWeight(2);
+
+    // Add a pulsing alpha effect
+    let pulse = map(sin(frameCount * 0.1), -1, 1, 100, 255);
+    stroke(p.color[0], p.color[1], p.color[2], pulse);
+
+    // Draw dashed line towards the target
+    drawingContext.setLineDash([10, 10]); // Make line dashed
+
+    if (p.type === "Remote Sensing") {
+        // Beam goes to the Sun
+        let targetRadius = 0;
+        if (p.target.includes("Corona")) targetRadius = 140;
+        else if (p.target.includes("Photosphere")) targetRadius = 75;
+        else targetRadius = 100;
+
+        line(satX - 40, satY, sx + targetRadius, sy);
+    } else {
+        // In-situ (Local) -> Beam scans the area right around the satellite
+        noFill();
+        circle(satX, satY, 150 + map(sin(frameCount * 0.05), -1, 1, 0, 30));
+    }
+
+    drawingContext.setLineDash([]); // Reset line dash
+}
+function drawButtons() {
+    let btnWidth = 100;
+    let btnHeight = 40;
+    let startX = 750;
+    let startY = 100;
+    let spacing = 50;
+
+    textAlign(CENTER, CENTER);
+    textSize(14);
+
+    for (let i = 0; i < payloads.length; i++) {
+        let y = startY + (i * spacing);
+        let p = payloads[i];
+
+        // Highlight the active button
+        if (i === activePayload) {
+            stroke(255);
+            strokeWeight(2);
+            fill(p.color[0], p.color[1], p.color[2], 200);
+        } else {
+            noStroke();
+            fill(50, 60, 80);
+        }
+
+        rect(startX, y, btnWidth, btnHeight, 5); // Rounded rectangle
+
+        fill(255);
+        noStroke();
+        text(p.name, startX + btnWidth / 2, y + btnHeight / 2);
+    }
+}
+function drawInfoPanel() {
+    let p = payloads[activePayload];
+
+    fill(30, 40, 60, 200);
+    stroke(p.color[0], p.color[1], p.color[2]);
+    strokeWeight(2);
+    rect(50, 480, 800, 100, 10);
+
+    noStroke();
+    fill(p.color);
+    textAlign(LEFT, TOP);
+    textSize(20);
+    text(p.name + " (" + p.type + ")", 70, 500);
+
+    fill(200);
+    textSize(14);
+    textStyle(ITALIC);
+    text(p.full, 70, 525);
+
+    textStyle(NORMAL);
+    fill(255);
+    text("Target: " + p.target, 70, 550);
+
+    // Wrap text description
+    text(p.desc, 400, 500, 430, 80);
 }
