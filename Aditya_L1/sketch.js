@@ -316,6 +316,9 @@ function draw() {
 }
 function mousePressed() {
     isLaunching = true;
+    // if(isLaunching){
+    //     isLaunching=1;
+    // }
     if (isLaunching){
         my_sound.play();
     }
