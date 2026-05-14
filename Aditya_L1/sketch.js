@@ -33,8 +33,8 @@ let is_satellite = false;
 let SatelliteX = 80;
 let SatelliteY = -300;
 let myStars = [];
-
 let activePayload = 0; // Tracks which instrument is currently clicked
+let rocketSound;
 
 // Data about the 7 scientific instruments on Aditya-L1
 const payloads = [
@@ -85,6 +85,7 @@ const payloads = [
 async function setup() {
     createCanvas(900, 600);
     frame_3_bg = await loadImage('assets/Frame-3.png');
+    my_sound = await loadSound('assets/sound.mp3');
     createStars(500);
 }
 function draw() {
@@ -102,11 +103,11 @@ function draw() {
         if (isLaunching === true) {
             F1rocketY = F1rocketY - 5;
             drawFlame(F1rocketX, F1rocketY);
-        }
-        if (F1rocketY < -50) {
-            frame_one = false;
-            frame_two = true;
-            // frame_three = true;
+            if (F1rocketY < -50) {
+                frame_one = false;
+                frame_two = true;
+                isLaunching = false;
+            }
         }
     }
     if (frame_two) {
@@ -315,6 +316,9 @@ function draw() {
 }
 function mousePressed() {
     isLaunching = true;
+    if (isLaunching){
+        my_sound.play();
+    }
     if (dismantleStep <= 5) {
         dismantleStep++;
     }
