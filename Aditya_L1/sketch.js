@@ -103,10 +103,15 @@ function draw() {
         if (isLaunching === true) {
             F1rocketY = F1rocketY - 5;
             drawFlame(F1rocketX, F1rocketY);
+            if (isLaunching) {
+                my_sound.play();
+            }
             if (F1rocketY < -50) {
                 frame_one = false;
                 frame_two = true;
                 isLaunching = false;
+                my_sound.stop();
+                // my_sound = null;
             }
         }
     }
@@ -316,12 +321,6 @@ function draw() {
 }
 function mousePressed() {
     isLaunching = true;
-    // if(isLaunching){
-    //     isLaunching=1;
-    // }
-    if (isLaunching){
-        my_sound.play();
-    }
     if (dismantleStep <= 5) {
         dismantleStep++;
     }
